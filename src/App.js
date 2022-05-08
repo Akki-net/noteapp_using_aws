@@ -5,6 +5,7 @@ import 'antd/dist/antd.css'
 import { listNotes } from './graphql/queries'
 import { v4 as uuid } from 'uuid'
 import {
+  updateNote as UpdateNote,
   createNote as CreateNote,
   deleteNote as DeleteNote
 } from './graphql/mutations'
@@ -59,7 +60,10 @@ function App() {
       <List.Item
         style={styles.item}
         actions={[
-          <p style={styles.p} onClick={() => deleteNote(item)}>Delete</p>
+          <p style={styles.p} onClick={() => deleteNote(item)}>Delete</p>,
+          <p style={styles.p} onClick={() => updateNote(item)}>
+            {item.completed ? 'completed' : 'mark completed'}
+          </p>
         ]}
       >
         <List.Item.Meta
@@ -116,6 +120,23 @@ function App() {
       console.log({ err })
     }
   }
+
+  async function updateNote(note) {
+    const index = state.notes.findIndex(n => n.id === note.id)
+    const notes = [...state.notes]
+    notes[index].completed = !note.completed
+    dispatch({ type: 'SET_NOTES', notes })
+    try {
+      await API.graphql({
+        query: UpdateNote,
+        variables: { input: { id: note.id, completed: notes[index].completed } }
+      })
+      console.log('note successfully updated!')
+    } catch (err) {
+      console.log('error: ', err)
+    }
+  }
+
 
   return (
     <div style={styles.container}>
